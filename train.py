@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # Load data
-df = pd.read_csv("epc_data_1.csv")
+df = pd.read_csv("data.csv")
 
 # Convert relevant columns to numeric (in case of import issues)
 cols_to_numeric = [
