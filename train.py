@@ -22,7 +22,8 @@ cols_to_numeric = [
     'Fund_Based_Limits', 
     'TOL/TNW',
     'TOL/Adj_TNW', 
-    'Order Book/Net Worth'
+    'Order Book/Net Worth',
+    'Current_Ratio'  # 🔁 New column added
 ]
 
 df[cols_to_numeric] = df[cols_to_numeric].apply(pd.to_numeric, errors='coerce')
@@ -37,11 +38,13 @@ conditions = (
     (df['ICR'] < 1.5).astype(int) +
     (df['CRILC_Flag'] == 1).astype(int) +
     (df['CRISIL_Sectoral_Index'] > 3).astype(int) +
-    (df['Fund_Based_Limits'] > 90).astype(int) +
+    (df['Fund_Based_Limits'] > 35).astype(int) +
     (df['TOL/TNW'] > 4).astype(int) +
     (df['TOL/Adj_TNW'] > 5).astype(int) +
-    ((df['Order Book/Net Worth'] > 5) | (df['Order Book/Net Worth'] < 1)).astype(int)
+    ((df['Order Book/Net Worth'] > 5) | (df['Order Book/Net Worth'] < 1)).astype(int) +
+    (df['Current_Ratio'] <= 1).astype(int)    # 🔁 New condition
 )
+
 
 
 df['Default_Flag'] = np.where(conditions >= 3, 'Default', 'NonDefault')

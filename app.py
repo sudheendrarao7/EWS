@@ -8,7 +8,7 @@ from reportlab.lib.pagesizes import letter
 from PIL import Image, ImageDraw, ImageFont
 import os
 
-# Load model
+# Load trained model
 model = joblib.load("rf_model.pkl")
 
 st.set_page_config(page_title="EWS Default Predictor", layout="centered")
@@ -17,6 +17,7 @@ st.markdown("Enter the financial indicators below:")
 
 # Input fields
 cris_score = st.number_input("CRISIL Score", 0.0, 10.0, 5.0, 0.1)
+current_ratio = st.number_input("Current Ratio", 0.0, 10.0, 1.5, 0.1)
 net_profit_margin = st.number_input("Net Profit Margin", -1.0, 1.0, 0.05, 0.01)
 icr = st.number_input("Interest Coverage Ratio (ICR)", 0.0, 100.0, 2.0, 0.1)
 crilc_flag = st.selectbox("CRILC Flag", [0, 1], format_func=lambda x: "No" if x == 0 else "Yes")
@@ -26,44 +27,45 @@ tol_tnw = st.number_input("TOL/TNW", 0.0, 100.0, 3.0, 0.1)
 tol_adj_tnw = st.number_input("TOL/Adj_TNW", 0.0, 100.0, 2.0, 0.1)
 order_book_nw = st.number_input("Order Book / Net Worth", 0.0, 20.0, 3.0, 0.1)
 
-input_data = np.array([[cris_score, net_profit_margin, icr, crilc_flag,
+# Match order of features used in training
+input_data = np.array([[cris_score, current_ratio, net_profit_margin, icr, crilc_flag,
                         sectoral_index, fund_based_limits, tol_tnw,
                         tol_adj_tnw, order_book_nw]])
 
 input_df = pd.DataFrame(input_data, columns=[
-    'CRISIL_Score', 'Net_Profit_Margin', 'ICR', 'CRILC_Flag',
-    'CRISIL_Sectoral_Index', 'Fund_Based_Limits', 'TOL_TNW',
-    'TOL_Adj_TNW', 'Order_Book_Net_Worth'
+    'CRISIL_Score', 'Current_Ratio', 'Net_Profit_Margin', 'ICR', 'CRILC_Flag',
+    'CRISIL_Sectoral_Index', 'Fund_Based_Limits', 'TOL/TNW',
+    'TOL/Adj_TNW', 'Order_Book/Net_Worth'
 ])
 
 if "result" not in st.session_state:
     st.session_state.result = None
 
-# Prediction Button
+# Predict button
 if st.button("Predict Default Risk"):
     prediction = model.predict(input_data)[0]
     prob = model.predict_proba(input_data)[0][1]
     label = "Default" if prediction == 1 else "Non-Default"
-    emoji = "⚠️" if prediction == 1 else "✅"
     
-    # Store result in session state
+    # Store result
     st.session_state.result = {
         "label": label,
         "prob": prob,
         "input_df": input_df
     }
 
-# Show results if available
+# Show prediction
 if st.session_state.result:
     result = st.session_state.result
     st.markdown("---")
     st.subheader("📌 Result")
     st.markdown(f"{'⚠️' if result['label'] == 'Default' else '✅'} **Prediction:** {result['label']}")
     st.markdown(f"📈 **Risk Score:** `{result['prob']:.2f}`")
+    
     st.markdown("### 🔍 Input Summary")
     st.dataframe(result["input_df"])
 
-    # Report export section
+    # Report export
     st.markdown("### 🖨️ Download Prediction Report")
     export_format = st.selectbox("Choose file format", ["PDF", "Image (PNG)"])
 
@@ -102,11 +104,11 @@ if st.session_state.result:
                     st.download_button("🖼️ Download PNG", data=f.read(),
                                        file_name="EWS_Report.png", mime="image/png")
 
-# Feature importance
+# Feature Importance
 with st.expander("📈 View Model Info & Feature Importance"):
     importances = model.feature_importances_
     feature_names = [
-        'CRISIL_Score', 'Net_Profit_Margin', 'ICR', 'CRILC_Flag',
+        'CRISIL_Score', 'Current_Ratio', 'Net_Profit_Margin', 'ICR', 'CRILC_Flag',
         'CRISIL_Sectoral_Index', 'Fund_Based_Limits', 'TOL/TNW',
         'TOL/Adj_TNW', 'Order_Book_Net_Worth'
     ]
