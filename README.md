@@ -57,4 +57,4 @@ Made by Navya and Sudheendra for the EWS Default Risk in SBI.
 
 ## License
 
-For internal/educational use only.
+For internal use only.
